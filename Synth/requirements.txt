@@ -4,7 +4,7 @@ soundfile
 librosa
 matplotlib
 seaborn
-tensorflow
+ipython==7.18.1
 -e git+https://github.com/prashanthtr/paramManager#egg=paramManager
 -e git+https://github.com/prashanthtr/genericSynth#egg=genericSynth
 -e git+https://github.com/prashanthtr/nsjsonmanager#egg=nsjsonmanager

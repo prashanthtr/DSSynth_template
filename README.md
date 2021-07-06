@@ -1,9 +1,22 @@
 
-# DSSynth_template for creating new synths
+# DSSynth_template for creating and uploading new synths
 
-# Setting up DSSynth_template
+# Directory structure
 
-## User instructions
+DSSynth_template
+ -- Synths
+ -- remoteUpload.py
+ -- Sample wave files
+ -- Synth.zip 
+
+# Instructions for running DSSynth_template
+
+See the README file inside the synths for setting up template.
+
+
+# Instructions for Remote Upload
+
+## Setup DSSynth_template environment
 
   >> git clone https://github.com/prashanthtr/DSSynth_template.git
 
@@ -15,19 +28,9 @@
 
   >> pip install -r requirements.txt --src '.'
 
-# Setup and run jupyter notebook
+## Remote upload to sonicthings.org
 
->> pip install jupyter
-
->> python3.8 -m ipykernel install --user --name DSSynth_template
-
->> jupyter notebook
-
->> Select *popTexture-notebook.ipynb* in the browser interface
-
-## Generate files from commandline
-
->> python DSGenerator/generate.py --configfile config_file.json --outputpath NewDataset
+>> python remoteUpload.py --configfile config_file.json --wavfiles dataset_sample_audio --zipfiles Synth.zip
 
 # Sample template 
 
