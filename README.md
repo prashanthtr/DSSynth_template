@@ -22,7 +22,7 @@ DSSynth_template
 
   >> conda activate DSSynth_template
 
-  >> pip install -r requirements.txt --src '.'
+  >> pip install -r requirements.txt
 
 # Instructions for creating synths and generating datasets
 	Refer to Readme inside SynthName_folder

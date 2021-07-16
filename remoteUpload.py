@@ -6,38 +6,65 @@ from base64 import b64encode, decode
 import itertools
 import numpy as np
 import json
-
 import argparse
-
 from sshtunnel import SSHTunnelForwarder
 import pymongo
 
-MONGO_HOST = 'sonicthings.org' 
-SERVER_USER   = 'prashanth' 
-PRIVATE_KEY = '/Users/alex/Downloads/pvt' #
 
-MONGO_USER='prashanth' #prashanth is only available user now
-MONGO_PASS ='crab1Cannon!' 
-
-MONGO_DB = "DSSynths"
-
-# define ssh tunnel
-server = SSHTunnelForwarder(
-    MONGO_HOST,
-    ssh_username=SERVER_USER,
-    ssh_pkey=PRIVATE_KEY,
-    remote_bind_address=('127.0.0.1', 27017)
-)
-
-# start ssh tunnel
-server.start()
-
-connection = pymongo.MongoClient('127.0.0.1', server.local_bind_port)
-mydb = connection[MONGO_DB]
-mycol = mydb["synths"]
-
-
+# Collection variables
+mycol = {}
 myConfig = {}
+
+def main ():
+
+    args = get_arguments()
+    module_name = args.configfile # here, the result is the file name, e.g. config or config-special
+
+    with open(module_name) as json_file:
+        templateConfig = json.load(json_file)
+        print("Reading parameters for generating ", templateConfig['soundname'], " texture.. ")
+
+    MONGO_HOST = templateConfig["MONGO_HOST"]
+    SERVER_USER   = templateConfig["SERVER_USER"]
+    SERVER_PWD = templateConfig["SERVER_PWD"]
+    PRIVATE_KEY = templateConfig["PRIVATE_KEY"]
+    MONGO_USER= templateConfig["MONGO_USER"] #prashanth is only available user now
+    MONGO_DB = templateConfig["MONGO_DB"]
+    MONGO_COLLECTIONS = templateConfig["MONGO_COLLECTIONS"]
+
+    try:
+
+        if SERVER_PWD != "" : 
+            with SSHTunnelForwarder(
+                MONGO_HOST,
+                ssh_username=SERVER_USER,
+                ssh_pkey=PRIVATE_KEY,
+                ssh_private_key_password=SERVER_PWD, 
+                remote_bind_address=('127.0.0.1', 27017)
+            ) as server:
+                print("connected")
+
+        else:
+            with SSHTunnelForwarder(
+                        MONGO_HOST,
+                        ssh_username=SERVER_USER,
+                        ssh_pkey=PRIVATE_KEY,
+                        remote_bind_address=('127.0.0.1', 27017)
+                ) as server:
+                    print("connected")
+
+    except Exception as e:
+            print("Not connected because: " + e)
+
+        # start ssh tunnel
+    else:
+
+        server.start()
+        print("connected to server")
+        connection = pymongo.MongoClient('127.0.0.1', server.local_bind_port)
+        mydb = connection[MONGO_DB]
+        mycol = mydb[MONGO_COLLECTIONS]
+        update(templateConfig, mycol)
 
 def get_arguments():
     parser = argparse.ArgumentParser(description="myParser")
@@ -46,7 +73,7 @@ def get_arguments():
     parser.add_argument("--zipfiles", required=True)    
     return parser.parse_args()
 
-def main():
+def update (MyConfig, mycol):
 
     # folderConsistency()
 
@@ -64,67 +91,78 @@ def main():
         for file in glob.glob(wavfiles +"/*.wav"):
             wav_file.append(open(file, "rb").read())
             wav_file_names.append(file)
-        print(wav_file_names)
+        #print(wav_file_names)
     else:
         wav_file.append(open(wavfiles, "rb").read())
         wav_file_names.append(wavfiles)
 
-    with open(module_name) as json_file:
-        MyConfig = json.load(json_file)
-        print("Reading parameters for generating ", MyConfig['soundname'], " texture.. ")
-    
+
     # Synth configuration
     dbobject["description"] = MyConfig["description"]
     dbobject["soundname"] = MyConfig["soundname"]
-    dbobject["samplerate"] = MyConfig["samplerate"]
-    dbobject["chunkSecs"] = MyConfig["chunkSecs"]
-    dbobject["soundDuration"] = MyConfig["soundDuration"]
-    dbobject["recordFormat"] = MyConfig["recordFormat"]
-    variations = MyConfig["soundDuration"]/MyConfig["chunkSecs"]
 
-    # Synth parameters
+    #dbobject["samplerate"] = MyConfig["samplerate"]
+    
+    try:
+        with open(os.path.join(MyConfig["soundname"], "config_file.json")) as json_file:
+             synthConfig = json.load(json_file)
+    except:
+        print("Create config file in synth folder")
 
-    userRange = []
-    synthRange = []
-    paramArr = MyConfig["params"]
-    fixedParams = MyConfig["fixedParams"]
+    else:
 
-    for p in MyConfig["params"]:
-        userRange.append(np.linspace(p["user_minval"], p["user_maxval"], p["user_nvals"], endpoint=True))
-        synthRange.append(np.linspace(p["synth_minval"], p["synth_maxval"], p["user_nvals"], endpoint=True))
+        dbobject["chunkSecs"] = synthConfig["chunkSecs"]
+        dbobject["soundDuration"] = synthConfig["soundDuration"]
+        dbobject["recordFormat"] = synthConfig["recordFormat"]
+        variations = synthConfig["soundDuration"]/synthConfig["chunkSecs"]
 
-    userParam = list(itertools.product(*userRange))
-    synthParam = list(itertools.product(*synthRange))
+        # Synth parameters
 
-    paramsArr = []
-    for p in paramArr:
-        paramsArr.append(p["synth_pname"])
+        userRange = []
+        synthRange = []
+        paramArr = synthConfig["params"]
+        fixedParams = synthConfig["fixedParams"]
 
-    for p in fixedParams:
-        paramsArr.append(p["synth_pname"])
+        for p in synthConfig["params"]:
+            userRange.append(np.linspace(p["user_minval"], p["user_maxval"], p["user_nvals"], endpoint=True))
+            synthRange.append(np.linspace(p["synth_minval"], p["synth_maxval"], p["user_nvals"], endpoint=True))
+
+        userParam = list(itertools.product(*userRange))
+        synthParam = list(itertools.product(*synthRange))
+
+        paramsArr = []
+        for p in paramArr:
+            paramsArr.append(p["synth_pname"])
+
+        for p in fixedParams:
+            paramsArr.append(p["synth_pname"])
 
 
-    dbobject["params"] = paramsArr
-    dbobject["numFiles"] = len(userParam)*variations
+        dbobject["params"] = paramsArr
+        dbobject["numFiles"] = len(userParam)*variations
 
-    zip_file = open(zipfile, "rb").read()
+        print(dbobject)
 
-    b64_zipfile = b64encode(zip_file)
-    b64_wavfile = []
-    dbobject["wavfile"] = []
+        zip_file = open(zipfile, "rb").read()
 
-    for index in range(len(wav_file)):
-        dbobject["wavfile"].append({"name": wav_file_names[index], "raw_data": b64encode(wav_file[index])})
+        b64_zipfile = b64encode(zip_file)
+        b64_wavfile = []
+        dbobject["wavfile"] = []
 
-    #
 
-    # dbobject["wavfile"] = b64_wavfile.decode("utf-8")
-    dbobject["zipfile"] = b64_zipfile.decode("utf-8")
-    # b64_zipfile.decode("utf-8")
+        if len(wav_file) == 0:            
+            print(" Please provide atleast 1 sample wav file")
 
-    #print(dbobject["zipfile"])
+        else:
+            for index in range(len(wav_file)):
+                dbobject["wavfile"].append({"name": wav_file_names[index], "raw_data": b64encode(wav_file[index])})
 
-    mycol.insert_one(dbobject)
+            # dbobject["wavfile"] = b64_wavfile.decode("utf-8")
+            dbobject["zipfile"] = b64_zipfile.decode("utf-8")
+            # b64_zipfile.decode("utf-8")
+
+            #print(dbobject["zipfile"])
+            mycol.insert_one(dbobject)
 
 if __name__ == '__main__':
     main()
