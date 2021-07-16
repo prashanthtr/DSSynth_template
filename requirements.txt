@@ -1,2 +1,8 @@
-ssh-tunnel
-pymongo
+setuptools
+numpy~=1.19.2
+soundfile
+librosa
+matplotlib
+seaborn
+sshtunnel
+pymongo==3.8.0

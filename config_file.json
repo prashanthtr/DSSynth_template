@@ -1,46 +1,12 @@
 {
 
-      "description": " A drip texture is a fast frequency sweep over 50hz",
-	"soundname": "myPop_001",
-	"samplerate": 16000,
-	"chunkSecs": 2,
-	"soundDuration": 4,
-      "recordFormat": "nsjson",
-      "tftype": "shards",
-      "shard_size": 2,
-	"params":
-	[
-            {
-                  "user_pname": "Irregularity",
-                  "user_minval": 0,
-                  "user_maxval": 1,
-                  "user_nvals": 2,
-                  "user_doc": "map to natural synth irregularity param [0, 1]",
-                  "synth_pname": "irreg_exp",
-                  "synth_minval": 0,
-                  "synth_maxval": 1,
-                  "synth_units": "natural"
-            },
-            {
-                  "user_pname": "center frequency",
-                  "user_minval": 0,
-                  "user_maxval": 1,
-                  "user_nvals": 2,
-                  "user_doc": "map to normed synth frequency param  to range [0.25, 0.75]",
-                  "synth_pname": "cf",
-                  "synth_minval": 0.25,
-                  "synth_maxval": 0.75,
-                  "synth_units": "norm"
-            }
-      ]
-      ,
-      "fixedParams":
-      [
-            {
-                  "user_doc": "rate of Pop sounds",
-                  "synth_pname": "rate_exp",
-                  "synth_val": 0.5,
-                  "synth_units": "norm"
-            }
-      ]
+      "description": " A pop texutre is a noise burst passed through noise filter",
+      "soundname": "mypop_001",
+      "MONGO_HOST": "sonicthings.org", 
+      "SERVER_USER": "prashanth", 
+      "PRIVATE_KEY": "/Users/alex/Downloads/pvt",
+      "SERVER_PWD": "", 
+      "MONGO_USER": "prashanth", 
+      "MONGO_DB": "DSSynths",
+      "MONGO_COLLECTIONS": "synths"
 }
